@@ -72,9 +72,13 @@ export class MainComponent implements AfterViewInit {
   async evaluate() {
 
     let model: any = await tf.loadLayersModel("http://localhost:4200/assets/model.json");
+    let canvasToEvaluate: HTMLCanvasElement;
     console.log(this.minX, this.maxX, this.minY, this.maxY);
-    if (this.rescalerOn) this.cropImageFromCanvas();
-    let inputTensor = tf.browser.fromPixels(this.paintCanvas, 3)// imageResult is an <img/> tag
+
+    if (this.rescalerOn) canvasToEvaluate = this.cropImageFromCanvas();
+    else canvasToEvaluate = this.paintCanvas;
+
+    let inputTensor = tf.browser.fromPixels(canvasToEvaluate, 3)// imageResult is an <img/> tag
       .resizeBilinear([255, 255])
       .reshape([1, 255, 255, 3])
       .cast('float32');
@@ -98,19 +102,21 @@ export class MainComponent implements AfterViewInit {
   }
 
   cropImageFromCanvas() {
-    const canvas = this.context.canvas;
+    const resultCanvas: HTMLCanvasElement = document.createElement("canvas");
     let w = 1 + this.maxX - this.minX;
     let h = 1 + this.maxY - this.minY;
+
     const cut = this.context.getImageData(this.minX, this.minY, this.maxX, this.maxY);
 
     if (w > h) {
-      canvas.width = w;
-      canvas.height = w;
+      resultCanvas.width = w;
+      resultCanvas.height = w;
     } else {
-      canvas.width = h;
-      canvas.height = h;
+      resultCanvas.width = h;
+      resultCanvas.height = h;
     }
-    this.context.putImageData(cut, 0, 0);
+    resultCanvas.getContext("2d")!.putImageData(cut, 0, 0);
+    return resultCanvas;
   }
 
 
