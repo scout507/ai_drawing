@@ -1,9 +1,6 @@
 import {AfterViewInit, Component} from '@angular/core';
 import {saveAs} from "file-saver";
 import * as tf from '@tensorflow/tfjs';
-import * as data from "../../../assets/model.json"
-import test from "../../../assets/data/test.png"
-import {model} from "@tensorflow/tfjs";
 
 
 @Component({
@@ -31,7 +28,6 @@ export class MainComponent implements AfterViewInit {
     this.context.fillStyle = "white";
     this.context.fillRect(0,0,this.paintCanvas.width,this.paintCanvas.height)
     this.addEvents();
-    localStorage.setItem("tensorflowjs_models/model", JSON.stringify(data));
   }
 
   addEvents() {

@@ -1,6 +1,12 @@
-<canvas id="canvas" class="js-paint  paint-canvas" width="700" height="700"></canvas>
-<button type="button" class="btn mr-2 ml-5 btn-success" (click)="evaluate()">Evaluate</button>
-<button type="button" class="mr-2 btn btn-danger" (click)="clear()">Clear</button>
-<button type="button" class="btn btn-info" (click)="download()">Download</button>
+<nav style="text-align: center; justify-content: center" class="navbar navbar-expand-xl navbar-dark bg-dark">
+  <a style="font-size: 20px" class="navbar-brand" href="">Quick Draw</a>
+</nav>
 
-<label id="output"></label>
+<div style="text-align: center; justify-content: center; align-content: center">
+  <canvas style="margin-left: auto; margin-right: auto" id="canvas" class="js-paint  paint-canvas" width="400" height="400"></canvas>
+  <button type="button" class="btn btn-success" (click)="evaluate()">Evaluate</button>
+  <button type="button" class="mr-2 ml-2 btn btn-danger" (click)="clear()">Clear</button>
+  <button type="button" class="btn btn-info" (click)="download()">Download</button>
+
+  <p id="output" class="mt-2"></p>
+</div>
