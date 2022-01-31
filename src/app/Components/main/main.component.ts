@@ -19,9 +19,21 @@ export class MainComponent implements AfterViewInit {
   minY = 1000;
   maxX = 0;
   maxY = 0;
-  paintCanvasHeight = 400;
-  paintCanvasWidth = 400;
+  canvasHeight = 400;
+  canvasWidth = 400;
   rescalerOn = true;
+
+  strokeLength = 15;
+  smoothingON = false;
+  canvasBackground: any;
+  contextBackground: any;
+  xBackground = 0;
+  yBackground = 0;
+  minXBackground = 1000;
+  minYBackground = 1000;
+  maxXBackground = 0;
+  maxYBackground = 0;
+
 
   constructor() {
   }
@@ -29,14 +41,26 @@ export class MainComponent implements AfterViewInit {
   ngAfterViewInit() {
     this.paintCanvas = document.getElementById('canvas') as HTMLCanvasElement;
     this.context = this.paintCanvas.getContext('2d');
-    this.context.lineCap = 'round';
-    this.context.lineWidth = 2;
-    this.context.strokeStyle = "black";
-    this.context.fillStyle = "white";
-    this.context.fillRect(0, 0, this.paintCanvas.width, this.paintCanvas.height)
+
+    this.canvasBackground = document.getElementById('canvas2') as HTMLCanvasElement;
+    this.contextBackground = this.canvasBackground.getContext('2d');
+
+    this.setupContext(this.context);
+    this.setupContext(this.contextBackground);
     this.addEvents();
-    this.minX = this.paintCanvas.width;
-    this.minY = this.paintCanvas.height;
+    this.minX = this.canvasWidth;
+    this.minY = this.canvasHeight;
+
+    this.minXBackground = this.canvasWidth;
+    this.minYBackground = this.canvasHeight;
+  }
+
+  setupContext(context: any) {
+    context.lineCap = 'round';
+    context.lineWidth = 2;
+    context.strokeStyle = "black";
+    context.fillStyle = "white";
+    context.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
   }
 
   addEvents() {
@@ -49,6 +73,7 @@ export class MainComponent implements AfterViewInit {
   startDrawing(event: any) {
     this.isMouseDown = true;
     [this.x, this.y] = [event.offsetX, event.offsetY];
+    [this.xBackground, this.yBackground] = [event.offsetX, event.offsetY];
   }
 
   stopDrawing() {
@@ -59,6 +84,9 @@ export class MainComponent implements AfterViewInit {
     if (this.isMouseDown) {
       const newX = event.offsetX;
       const newY = event.offsetY;
+
+      this.drawLineBackground(newX, newY);
+
       this.trackValues(newX, newY);
       this.context.beginPath();
       this.context.moveTo(this.x, this.y);
@@ -69,14 +97,35 @@ export class MainComponent implements AfterViewInit {
     }
   }
 
+  drawLineBackground(newX: number, newY: number) {
+    if (this.getDistance(this.xBackground, newX, this.yBackground, newY) >= this.strokeLength) {
+      if (newX > this.maxXBackground) this.maxXBackground = newX;
+      if (newX < this.maxXBackground) this.maxXBackground = newX;
+      if (newY > this.maxYBackground) this.maxYBackground = newY;
+      if (newY < this.maxYBackground) this.maxYBackground = newY;
+      this.contextBackground.beginPath();
+      this.contextBackground.moveTo(this.xBackground, this.yBackground);
+      this.contextBackground.lineTo(newX, newY);
+      this.contextBackground.stroke();
+      this.xBackground = newX;
+      this.yBackground = newY;
+    }
+  }
+
   async evaluate() {
 
     let model: any = await tf.loadLayersModel("http://localhost:4200/assets/model.json");
     let canvasToEvaluate: HTMLCanvasElement;
+    let background = false;
     console.log(this.minX, this.maxX, this.minY, this.maxY);
 
-    if (this.rescalerOn) canvasToEvaluate = this.cropImageFromCanvas();
+    if (this.smoothingON) {
+      canvasToEvaluate = this.canvasBackground;
+      background = true;
+    }
     else canvasToEvaluate = this.paintCanvas;
+
+    if (this.rescalerOn) canvasToEvaluate = this.cropImageFromCanvas(canvasToEvaluate, background);
 
     let inputTensor = tf.browser.fromPixels(canvasToEvaluate, 3)// imageResult is an <img/> tag
       .resizeBilinear([255, 255])
@@ -101,12 +150,20 @@ export class MainComponent implements AfterViewInit {
     if (y < this.minY) this.minY = y;
   }
 
-  cropImageFromCanvas() {
+  cropImageFromCanvas(canvas: HTMLCanvasElement, background: boolean) {
     const resultCanvas: HTMLCanvasElement = document.createElement("canvas");
+
+    let cut = canvas.getContext("2d")!.getImageData(this.minX, this.minY, this.maxX, this.maxY);
     let w = 1 + this.maxX - this.minX;
     let h = 1 + this.maxY - this.minY;
 
-    const cut = this.context.getImageData(this.minX, this.minY, this.maxX, this.maxY);
+    if (background){
+      w = 1 + this.maxXBackground - this.minXBackground;
+      h = 1 + this.maxYBackground - this.minYBackground;
+      cut = canvas.getContext("2d")!.getImageData(this.minXBackground, this.minYBackground, this.maxXBackground, this.maxYBackground);
+    }
+
+
 
     if (w > h) {
       resultCanvas.width = w;
@@ -128,22 +185,42 @@ export class MainComponent implements AfterViewInit {
   }
 
   clear() {
-    this.paintCanvas.width = this.paintCanvasWidth;
-    this.paintCanvas.height = this.paintCanvasHeight;
     this.maxX = 0;
     this.maxY = 0;
-    this.minX = this.paintCanvasWidth;
-    this.minY = this.paintCanvasHeight;
-    this.context.lineCap = 'round';
-    this.context.lineWidth = 2;
-    this.context.fillStyle = "white";
-    this.context.fillRect(0, 0, this.paintCanvas.width, this.paintCanvas.height)
+    this.minX = this.canvasWidth;
+    this.minY = this.canvasHeight;
+
+    this.maxXBackground = 0;
+    this.maxYBackground = 0;
+    this.minXBackground = this.canvasWidth;
+    this.minYBackground = this.canvasHeight;
+
+    this.context.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    this.contextBackground.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
     document.getElementById("output")!.innerHTML = "";
   }
 
   download() {
-    this.paintCanvas.toBlob((blob: any) => {
+    let canvasToEvaluate: HTMLCanvasElement;
+    let background = false;
+
+    if (this.smoothingON) {
+      canvasToEvaluate = this.canvasBackground;
+      background = true;
+    }
+    else canvasToEvaluate = this.paintCanvas;
+
+    if (this.rescalerOn) canvasToEvaluate = this.cropImageFromCanvas(canvasToEvaluate, background);
+
+    canvasToEvaluate.toBlob((blob: any) => {
       saveAs(blob, "image.png")
     });
+  }
+
+  getDistance(x1: number, x2: number, y1: number, y2: number):
+    number {
+    let x = x1 - x2;
+    let y = y1 - y2;
+    return Math.sqrt((x * x + y * y));
   }
 }
