@@ -100,9 +100,9 @@ export class MainComponent implements AfterViewInit {
   drawLineBackground(newX: number, newY: number) {
     if (this.getDistance(this.xBackground, newX, this.yBackground, newY) >= this.strokeLength) {
       if (newX > this.maxXBackground) this.maxXBackground = newX;
-      if (newX < this.maxXBackground) this.maxXBackground = newX;
+      if (newX < this.minXBackground) this.minXBackground = newX;
       if (newY > this.maxYBackground) this.maxYBackground = newY;
-      if (newY < this.maxYBackground) this.maxYBackground = newY;
+      if (newY < this.minYBackground) this.minYBackground = newY;
       this.contextBackground.beginPath();
       this.contextBackground.moveTo(this.xBackground, this.yBackground);
       this.contextBackground.lineTo(newX, newY);
@@ -116,16 +116,11 @@ export class MainComponent implements AfterViewInit {
 
     let model: any = await tf.loadLayersModel("http://localhost:4200/assets/model.json");
     let canvasToEvaluate: HTMLCanvasElement;
-    let background = false;
-    console.log(this.minX, this.maxX, this.minY, this.maxY);
 
-    if (this.smoothingON) {
-      canvasToEvaluate = this.canvasBackground;
-      background = true;
-    }
+    if (this.smoothingON) canvasToEvaluate = this.canvasBackground;
     else canvasToEvaluate = this.paintCanvas;
 
-    if (this.rescalerOn) canvasToEvaluate = this.cropImageFromCanvas(canvasToEvaluate, background);
+    if (this.rescalerOn) canvasToEvaluate = this.cropImageFromCanvas(canvasToEvaluate, this.smoothingON);
 
     let inputTensor = tf.browser.fromPixels(canvasToEvaluate, 3)// imageResult is an <img/> tag
       .resizeBilinear([255, 255])
@@ -202,18 +197,20 @@ export class MainComponent implements AfterViewInit {
 
   download() {
     let canvasToEvaluate: HTMLCanvasElement;
-    let background = false;
-
-    if (this.smoothingON) {
+    let filename = "image"
+    if (this.smoothingON){
       canvasToEvaluate = this.canvasBackground;
-      background = true;
+      filename += "_smo"
     }
     else canvasToEvaluate = this.paintCanvas;
 
-    if (this.rescalerOn) canvasToEvaluate = this.cropImageFromCanvas(canvasToEvaluate, background);
+    if (this.rescalerOn){
+      filename += "_re"
+      canvasToEvaluate = this.cropImageFromCanvas(canvasToEvaluate, this.smoothingON);
+    }
 
     canvasToEvaluate.toBlob((blob: any) => {
-      saveAs(blob, "image.png")
+      saveAs(blob, filename + ".png")
     });
   }
 
