@@ -25,6 +25,7 @@ export class MainComponent implements AfterViewInit {
 
   strokeLength = 15;
   smoothingON = false;
+  canvasBackgroundHidden = true;
   canvasBackground: any;
   contextBackground: any;
   xBackground = 0;
