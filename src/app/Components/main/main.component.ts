@@ -115,7 +115,7 @@ export class MainComponent implements AfterViewInit {
 
   async evaluate() {
 
-    let model: any = await tf.loadLayersModel("http://localhost:4200/assets/model.json");
+    let model: any = await tf.loadLayersModel("./assets/model.json");
     let canvasToEvaluate: HTMLCanvasElement;
 
     if (this.smoothingON) canvasToEvaluate = this.canvasBackground;
