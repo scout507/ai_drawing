@@ -58,7 +58,7 @@ export class MainComponent implements AfterViewInit {
     this.loadModel().then();
   }
 
-  async loadModel(){
+  async loadModel() {
     this.model = await tf.loadLayersModel("./assets/model.json");
   }
 
@@ -119,7 +119,12 @@ export class MainComponent implements AfterViewInit {
     }
   }
 
-  async evaluate() {
+  evaluate() {
+    if (this.maxX == 0) {
+      document.getElementById("output")!.innerHTML = "";
+      return
+    }
+
     let canvasToEvaluate: HTMLCanvasElement;
 
     if (this.smoothingON) canvasToEvaluate = this.canvasBackground;
@@ -151,18 +156,19 @@ export class MainComponent implements AfterViewInit {
   }
 
   cropImageFromCanvas(canvas: HTMLCanvasElement, background: boolean) {
+
     const resultCanvas: HTMLCanvasElement = document.createElement("canvas");
 
     let cut = canvas.getContext("2d")!.getImageData(this.minX, this.minY, this.maxX, this.maxY);
+
     let w = 1 + this.maxX - this.minX;
     let h = 1 + this.maxY - this.minY;
 
-    if (background){
+    if (background) {
       w = 1 + this.maxXBackground - this.minXBackground;
       h = 1 + this.maxYBackground - this.minYBackground;
       cut = canvas.getContext("2d")!.getImageData(this.minXBackground, this.minYBackground, this.maxXBackground, this.maxYBackground);
     }
-
 
 
     if (w > h) {
@@ -203,13 +209,12 @@ export class MainComponent implements AfterViewInit {
   download() {
     let canvasToEvaluate: HTMLCanvasElement;
     let filename = "image"
-    if (this.smoothingON){
+    if (this.smoothingON) {
       canvasToEvaluate = this.canvasBackground;
       filename += "_smo"
-    }
-    else canvasToEvaluate = this.paintCanvas;
+    } else canvasToEvaluate = this.paintCanvas;
 
-    if (this.rescalerOn){
+    if (this.rescalerOn) {
       filename += "_re"
       canvasToEvaluate = this.cropImageFromCanvas(canvasToEvaluate, this.smoothingON);
     }
