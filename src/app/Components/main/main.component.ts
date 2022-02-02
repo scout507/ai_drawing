@@ -9,6 +9,7 @@ import * as tf from '@tensorflow/tfjs';
   styleUrls: ['./main.component.css']
 })
 export class MainComponent implements AfterViewInit {
+  model: any;
   paintCanvas!: HTMLCanvasElement;
   context: any;
   x = 0;
@@ -54,6 +55,11 @@ export class MainComponent implements AfterViewInit {
 
     this.minXBackground = this.canvasWidth;
     this.minYBackground = this.canvasHeight;
+    this.loadModel().then();
+  }
+
+  async loadModel(){
+    this.model = await tf.loadLayersModel("./assets/model.json");
   }
 
   setupContext(context: any) {
@@ -114,8 +120,6 @@ export class MainComponent implements AfterViewInit {
   }
 
   async evaluate() {
-
-    let model: any = await tf.loadLayersModel("./assets/model.json");
     let canvasToEvaluate: HTMLCanvasElement;
 
     if (this.smoothingON) canvasToEvaluate = this.canvasBackground;
@@ -127,7 +131,7 @@ export class MainComponent implements AfterViewInit {
       .resizeBilinear([255, 255])
       .reshape([1, 255, 255, 3])
       .cast('float32');
-    let predictionResult = model.predict(inputTensor).dataSync();
+    let predictionResult = this.model.predict(inputTensor).dataSync();
     let recognizedDigit = predictionResult.indexOf(Math.max(...predictionResult));
     let sum = 0;
 
