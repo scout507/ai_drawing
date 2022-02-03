@@ -17,7 +17,7 @@
       </div>
 
       <div class="col mt-5 text-center">
-        <p>
+        <p id="list">
           You can draw:<br><br>
           Apple<br>
           Face<br>
@@ -57,6 +57,11 @@
           Smoothing is:
           <ng-container *ngIf="smoothingON">on</ng-container>
           <ng-container *ngIf="!smoothingON">off</ng-container>
+        </button>
+        <button type="button" class="btn btn-info ml-2" (click)="changeMode()">
+          Ai mode:
+          <ng-container *ngIf="!mode">10 classes</ng-container>
+          <ng-container *ngIf="mode">21 classes</ng-container>
         </button>
       </div>
     </div>
