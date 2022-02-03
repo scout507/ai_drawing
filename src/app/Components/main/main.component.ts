@@ -27,7 +27,10 @@ export class MainComponent implements AfterViewInit {
   strokeLength = 15;
   smoothingON = false;
   canvasBackgroundHidden = true;
+
+  /** this canvas is needed for edge smoothing */
   canvasBackground: any;
+
   contextBackground: any;
   xBackground = 0;
   yBackground = 0;
@@ -37,9 +40,9 @@ export class MainComponent implements AfterViewInit {
   maxYBackground = 0;
 
 
-  constructor() {
-  }
-
+  /**
+   * Sets all variables at the beginning of the session, adds all eventlisteners and load the tenserflow model.
+   */
   ngAfterViewInit() {
     this.paintCanvas = document.getElementById('canvas') as HTMLCanvasElement;
     this.context = this.paintCanvas.getContext('2d');
@@ -58,10 +61,17 @@ export class MainComponent implements AfterViewInit {
     this.loadModel().then();
   }
 
-  async loadModel() {
+  /**
+   * Loads the TensorFlow model.
+   */
+  async loadModel(){
     this.model = await tf.loadLayersModel("./assets/model.json");
   }
 
+  /**
+   * Setzt die richtigen einstellungen vom Context des Canvas.
+   * @param context contains the context of a canvas.
+   */
   setupContext(context: any) {
     context.lineCap = 'round';
     context.lineWidth = 2;
@@ -70,6 +80,9 @@ export class MainComponent implements AfterViewInit {
     context.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
   }
 
+  /**
+   * Adds the eventlisteners for painting in the canvas.
+   */
   addEvents() {
     this.paintCanvas.addEventListener('mousedown', this.startDrawing.bind(this));
     this.paintCanvas.addEventListener('mousemove', this.drawLine.bind(this));
@@ -77,16 +90,32 @@ export class MainComponent implements AfterViewInit {
     this.paintCanvas.addEventListener('mouseout', this.stopDrawing.bind(this));
   }
 
+  /**
+   * Triggerd when the user draw in the canvas.
+   * Starts drawing in the canvas and remembers the coordinates.
+   * @param event given by event listener.
+   */
   startDrawing(event: any) {
     this.isMouseDown = true;
     [this.x, this.y] = [event.offsetX, event.offsetY];
     [this.xBackground, this.yBackground] = [event.offsetX, event.offsetY];
   }
 
+  /**
+   * Triggerd when the user no longer paints in the canvas.
+   * Stop painting.
+   */
   stopDrawing() {
     this.isMouseDown = false;
   }
 
+  /**
+   * Triggerd when the user has started painting and paints a line.
+   * Starts painting a line in the "paintCanvas" and triggers the similar
+   * sequence for the "canvasBackground".
+   * Meanwhile, the coordinates are observed with the "trackValues" function.
+   * @param event given by event listener.
+   */
   drawLine(event: any) {
     if (this.isMouseDown) {
       const newX = event.offsetX;
@@ -104,6 +133,13 @@ export class MainComponent implements AfterViewInit {
     }
   }
 
+  /**
+   * Draws a line only if the distance between the new and the old point is
+   * is equal to or greater than the "strokeLength".
+   * Paint a smoothed line in the "canvasBackground".
+   * @param newX current X coordinate of the mouse pointer from the user in the canvas.
+   * @param newY current Y coordinate of the mouse pointer from the user in the canvas.
+   */
   drawLineBackground(newX: number, newY: number) {
     if (this.getDistance(this.xBackground, newX, this.yBackground, newY) >= this.strokeLength) {
       if (newX > this.maxXBackground) this.maxXBackground = newX;
@@ -119,6 +155,15 @@ export class MainComponent implements AfterViewInit {
     }
   }
 
+  /**
+   * Evaluates the user's drawn image.
+   * If the user has not painted, the method is cancelled.
+   * Depending on the activated filter, the "paintCanvas" or the "canvasBackground" is used
+   * and the size of the canvas or the size of the image (resize) is used.
+   * The image is then extracted from the canvas and resized to the appropriate size of the model (255x255 px).
+   * At the end, the result is evaluated and displayed to the user.
+   => Which category does the picture belong to, how sure is the model.
+   */
   evaluate() {
     if (this.maxX == 0) {
       document.getElementById("output")!.innerHTML = "";
@@ -145,9 +190,18 @@ export class MainComponent implements AfterViewInit {
     })
 
     this.resultList(predictionResult, sum);
-    document.getElementById("output")!.innerHTML = this.labels[recognizedDigit] + "  " + Math.round(predictionResult[recognizedDigit] * 100 / sum) + "%";
+
+    if (sum == 0)
+      document.getElementById("output")!.innerHTML = "Not recognised";
+    else
+      document.getElementById("output")!.innerHTML = this.labels[recognizedDigit] + "  " + Math.round(predictionResult[recognizedDigit] * 100 / sum) + "%";
   }
 
+  /**
+   * Saves the largest and smallest value of x and y, from the actual drawing.
+   * @param x x Coordinate in the canvas
+   * @param y y Coordinate in the canvas
+   */
   trackValues(x: number, y: number) {
     if (x > this.maxX) this.maxX = x;
     if (x < this.minX) this.minX = x;
@@ -155,7 +209,13 @@ export class MainComponent implements AfterViewInit {
     if (y < this.minY) this.minY = y;
   }
 
-  cropImageFromCanvas(canvas: HTMLCanvasElement, background: boolean) {
+  /**
+   * Creates a new canvas that resizes to and includes the image in the passed canvas.
+   * @param canvas
+   * @param background is the given canvas the "canvasBackground".
+   * @return HTMLCanvasElement the new resized canvas
+   */
+  cropImageFromCanvas(canvas: HTMLCanvasElement, background: boolean): HTMLCanvasElement {
 
     const resultCanvas: HTMLCanvasElement = document.createElement("canvas");
 
@@ -182,7 +242,11 @@ export class MainComponent implements AfterViewInit {
     return resultCanvas;
   }
 
-
+  /**
+   * Logs the various results from the "this.model" in the console.
+   * @param results results from the prediction from "this.model"
+   * @param sum sum of all positive results from "this.model" prediction
+   */
   resultList(results: any, sum: number) {
     console.log("Results:")
     for (let i = 0; i < results.length; i++) {
@@ -190,6 +254,9 @@ export class MainComponent implements AfterViewInit {
     }
   }
 
+  /**
+   * Resets all values so that the user can start drawing from the beginning.
+   */
   clear() {
     this.maxX = 0;
     this.maxY = 0;
@@ -206,6 +273,11 @@ export class MainComponent implements AfterViewInit {
     document.getElementById("output")!.innerHTML = "";
   }
 
+  /**
+   * Triggered when the user presses the download button.
+   * Download the drawn image with the filters activated as a png.
+   * The filename is adapted to the activated filters.
+   */
   download() {
     let canvasToEvaluate: HTMLCanvasElement;
     let filename = "image"
@@ -224,6 +296,14 @@ export class MainComponent implements AfterViewInit {
     });
   }
 
+  /**
+   * Calculates the distance between two points.
+   * @param x1 x Coordinate of the first point
+   * @param x2 x Coordinate of the second point
+   * @param y1 y Coordinate of the first point
+   * @param y2 y Coordinate of the second point
+   * @return number returns the distance
+   */
   getDistance(x1: number, x2: number, y1: number, y2: number):
     number {
     let x = x1 - x2;
