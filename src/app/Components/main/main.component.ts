@@ -10,6 +10,7 @@ import * as tf from '@tensorflow/tfjs';
 })
 export class MainComponent implements AfterViewInit {
   model: any;
+  mode = false; // false = 10 classes; true = 21 classes
   paintCanvas!: HTMLCanvasElement;
   context: any;
   x = 0;
@@ -58,14 +59,15 @@ export class MainComponent implements AfterViewInit {
 
     this.minXBackground = this.canvasWidth;
     this.minYBackground = this.canvasHeight;
-    this.loadModel().then();
+    this.loadModel("./assets/model.json").then();
   }
 
   /**
    * Loads the TensorFlow model.
+   * @param path contains the path to the TenserFlow model
    */
-  async loadModel(){
-    this.model = await tf.loadLayersModel("./assets/model.json");
+  async loadModel(path: string) {
+    this.model = await tf.loadLayersModel(path);
   }
 
   /**
@@ -309,5 +311,55 @@ export class MainComponent implements AfterViewInit {
     let x = x1 - x2;
     let y = y1 - y2;
     return Math.sqrt((x * x + y * y));
+  }
+
+  /**
+   * This change the TenserFlow model and the list of available categories.
+   */
+  changeModel() {
+    this.mode = !this.mode;
+
+    if (this.mode) {
+      this.loadModel("./assets/advanced/model.json").then();
+      this.labels = ["apple", "baseball", "bicycle", "campfire", "car", "cup", "diamond", "donut", "elephant", "face", "fish", "foot", "hand", "house", "key", "mountain", "pants", "pizza", "snowman", "t-shirt", "tree"]
+      document.getElementById("list")!.innerHTML =
+        "You can draw:<br><br>\n" +
+        "Apple<br>\n" +
+        "Face<br>\n" +
+        "Pizza<br>\n" +
+        "Campfire<br>\n" +
+        "Diamond<br>\n" +
+        "Donut<br>\n" +
+        "Fish<br>\n" +
+        "Hand<br>\n" +
+        "House<br>\n" +
+        "T-Shirt<br>\n" +
+        "baseball<br>\n" +
+        "bicycle<br>\n" +
+        "car<br>\n" +
+        "cup<br>\n" +
+        "elephant<br>\n" +
+        "foot<br>\n" +
+        "key<br>\n" +
+        "mountain<br>\n" +
+        "pants<br>\n" +
+        "snowman<br>\n" +
+        "tree";
+    } else {
+      this.loadModel("./assets/model.json").then();
+      this.labels = ["apple", "campfire", "diamond", "donut", "face", "fish", "hand", "house", "pizza", "t-shirt"]
+      document.getElementById("list")!.innerHTML =
+        "You can draw:<br><br>\n" +
+        "Apple<br>\n" +
+        "Face<br>\n" +
+        "Pizza<br>\n" +
+        "Campfire<br>\n" +
+        "Diamond<br>\n" +
+        "Donut<br>\n" +
+        "Fish<br>\n" +
+        "Hand<br>\n" +
+        "House<br>\n" +
+        "T-Shirt";
+    }
   }
 }
