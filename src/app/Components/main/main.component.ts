@@ -179,7 +179,7 @@ export class MainComponent implements AfterViewInit {
 
     if (this.rescalerOn) canvasToEvaluate = this.cropImageFromCanvas(canvasToEvaluate, this.smoothingON);
 
-    let inputTensor = tf.browser.fromPixels(canvasToEvaluate, 3)// imageResult is an <img/> tag
+    let inputTensor = tf.browser.fromPixels(canvasToEvaluate, 3)
       .resizeBilinear([255, 255])
       .reshape([1, 255, 255, 3])
       .cast('float32');
